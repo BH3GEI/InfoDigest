@@ -1,0 +1,18 @@
+2025-03-29T03:45:07.827004Z  INFO dora_daemon::coordinator: Connected to dora-coordinator at 127.0.0.1:53290
+2025-03-29T03:45:07.829189Z  INFO zenoh::net::runtime: Using ZID: 8355d5dc49b384658f2516f06ffb7e20
+2025-03-29T03:45:07.830897Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/[fe80::215:5dff:febd:3e01]:39599
+2025-03-29T03:45:07.831277Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/10.255.255.254:39599
+2025-03-29T03:45:07.831532Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/192.168.65.151:39599
+2025-03-29T03:45:07.832055Z  INFO zenoh::net::runtime::orchestrator: zenohd listening scout messages on 224.0.0.224:7446
+2025-03-29T16:32:30.530930Z  INFO dora_daemon::coordinator: Connected to dora-coordinator at 127.0.0.1:53290
+2025-03-29T16:32:30.538245Z  INFO zenoh::net::runtime: Using ZID: fd84a7c9e69c8bea1425d8b43221ee2c
+2025-03-29T16:32:30.557698Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/[fe80::215:5dff:fe37:f705]:36137
+2025-03-29T16:32:30.558985Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/10.255.255.254:36137
+2025-03-29T16:32:30.559235Z  INFO zenoh::net::runtime::orchestrator: Zenoh can be reached at: tcp/192.168.65.151:36137
+2025-03-29T16:32:30.559635Z  INFO zenoh::net::runtime::orchestrator: zenohd listening scout messages on 224.0.0.224:7446
+2025-03-29T16:36:48.134924Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from A450DC674AE9424BAF32809C20A12B91 exceeding delta 500ms is rejected: 2025-03-29T16:36:48.984636914Z vs. now: 2025-03-29T16:36:48.134877122Z
+2025-03-29T16:47:04.178667Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from A450DC674AE9424BAF32809C20A12B91 exceeding delta 500ms is rejected: 2025-03-29T16:47:05.049654785Z vs. now: 2025-03-29T16:47:04.178650092Z
+2025-03-29T16:53:45.356101Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from A450DC674AE9424BAF32809C20A12B91 exceeding delta 500ms is rejected: 2025-03-29T16:53:46.222610883Z vs. now: 2025-03-29T16:53:45.356078192Z
+2025-03-29T17:04:01.210802Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from A450DC674AE9424BAF32809C20A12B91 exceeding delta 500ms is rejected: 2025-03-29T17:04:02.077241655Z vs. now: 2025-03-29T17:04:01.210779555Z
+2025-03-29T17:14:17.154959Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from A450DC674AE9424BAF32809C20A12B91 exceeding delta 500ms is rejected: 2025-03-29T17:14:18.033149805Z vs. now: 2025-03-29T17:14:17.154844179Z
+2025-03-29T17:18:54.492591Z  WARN run_inner{self.daemon_id=DaemonId { machine_id: None, uuid: b6e677f1-66b9-4847-9142-2e7d0c9c1d5d }}: dora_daemon: failed to update HLC with incoming event timestamp: incoming timestamp from BE9796C2EAE74B38B7A5A7EF47EAFCD4 exceeding delta 500ms is rejected: 2025-03-29T17:18:55.529284648Z vs. now: 2025-03-29T17:18:54.492559641Z

@@ -1,0 +1,17 @@
+nodes:
+  - id: rss-operator
+    path: scripts/rss_operator.py
+    outputs: rss_data
+    
+  - id: llm-operator
+    path: scripts/llm_operator.py
+    inputs:
+      rss_data: rss-operator/rss_data
+    outputs: processed_content
+    
+  - id: delivery-operator
+    path: scripts/delivery_operator.py
+    inputs:
+      content: llm-operator/processed_content
+    env:
+      IS_DATAFLOW_END: true

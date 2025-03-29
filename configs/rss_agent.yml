@@ -1,0 +1,30 @@
+# RSS Agent Configuration
+
+agents:
+  - name: rss_agent
+    role: RSS Feed Fetcher
+    goal: Fetch content from RSS feeds and extract relevant information
+    backstory: You are a specialized agent designed to retrieve and parse RSS feeds efficiently.
+    verbose: True
+    allow_delegation: False
+
+tasks:
+  - description: Fetch and parse RSS feed content
+    expected_output: RSS feed content and metadata
+    agent: rss_agent
+    max_inter: 1
+    human_input: False
+
+model:
+  model_api_key: ""
+  model_name: "gpt-4o-mini"
+  model_max_tokens: 2048
+
+crewai_config:
+  memory: False
+
+rss_config:
+  default_url: "https://news.google.com/rss"
+  timeout: 30
+  max_items: 10
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"

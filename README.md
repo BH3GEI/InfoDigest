@@ -21,20 +21,3 @@
 
 ## 项目结构
 
-```plaintext
-rssflow/
-├── configs/                # 配置文件目录
-│   ├── rss_agent.yml      # RSS 抓取配置
-│   ├── llm_agent.yml      # LLM 处理配置
-│   └── delivery_agent.yml # 分发系统配置
-├── scripts/               # Agent 脚本目录
-│   ├── rss_operator.py    # RSS 抓取实现
-│   ├── llm_operator.py    # 内容处理实现
-│   └── delivery_operator.py # 分发系统实现
-├── data/                  # 数据目录
-│   ├── templates/         # 报告模板
-│   └── output/           # 输出内容
-└── tests/                # 测试目录
-    └── test_agents.py    # Agent 测试用例
-```
-
