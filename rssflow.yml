@@ -2,16 +2,26 @@ nodes:
   - id: rss-operator
     path: scripts/rss_operator.py
     outputs: rss_data
+    description: "RSS源数据获取和解析，支持关键词过滤与主题追踪"
     
   - id: llm-operator
     path: scripts/llm_operator.py
     inputs:
       rss_data: rss-operator/rss_data
     outputs: processed_feeds
+    description: "智能内容处理，生成摘要、分类和标签化内容"
     
   - id: delivery-operator
     path: scripts/delivery_operator.py
     inputs:
       processed_feeds: llm-operator/processed_feeds
+    outputs: formatted_content
+    description: "内容分发系统，支持多种输出格式（日报/周报/RSS/邮件）"
+    
+  - id: storage-operator
+    path: scripts/delivery_operator.py
+    inputs:
+      formatted_content: delivery-operator/formatted_content
     env:
       IS_DATAFLOW_END: true
+    description: "存储处理结果，提供历史内容查询功能"

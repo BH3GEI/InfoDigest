@@ -38,7 +38,7 @@
             </div>
             <div class="digest-info">
               <h3 class="digest-title">{{ digest.title }}</h3>
-              <p class="digest-date">{{ digest.date }}</p>
+              <p class="digest-date">{{ digest.date }} {{ digest.formattedTime ? `${digest.formattedTime}` : '' }}</p>
             </div>
           </div>
         </div>
@@ -131,21 +131,52 @@ async function loadDigests() {
     // 从后端API获取摘要文件列表
     const response = await axios.get('/api/digests')
     digests.value = response.data || []
+    
+    // 处理每个摘要的时间戳和格式化显示
+    digests.value = digests.value.map(digest => {
+      // 格式化日期
+      const dateMatch = digest.filename.match(/(\d{4}-\d{2}-\d{2})/);
+      if (dateMatch) {
+        digest.date = dateMatch[1];
+      }
+      
+      // 提取时间戳
+      let timeStamp = null;
+      
+      // 匹配模式: filename_YYYY-MM-DD_HHMM.md
+      const timePattern = digest.filename.match(/_(\d{4}-\d{2}-\d{2})_(\d{4})\.(md)$/);
+      if (timePattern) {
+        timeStamp = parseInt(timePattern[2], 10);
+        digest.timestamp = timeStamp;
+        
+        // 格式化为时:分显示
+        const hours = Math.floor(timeStamp / 100);
+        const minutes = timeStamp % 100;
+        digest.formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } else {
+        // 匹配无时间的情况
+        digest.formattedTime = '';
+        digest.timestamp = 0;
+      }
+      
+      return digest;
+    });
+    
     filterDigests()
     sortDigests()
   } catch (error) {
     console.error('加载摘要文件列表失败:', error)
     // 使用模拟数据
     digests.value = [
-      { filename: 'RSS_Digest_2025-03-30.md', title: 'RSS信息聚合', date: '2025-03-30' },
-      { filename: 'NYT_>_World_News_2025-03-30.md', title: 'NYT > World News', date: '2025-03-30' },
-      { filename: 'BBC_News_2025-03-30.md', title: 'BBC News', date: '2025-03-30' },
-      { filename: '36氪_2025-03-30.md', title: '36氪', date: '2025-03-30' },
-      { filename: 'Hacker_News_2025-03-30.md', title: 'Hacker News', date: '2025-03-30' },
-      { filename: 'InfoQ_-_促进软件开发领域知识与创新的传播_2025-03-30.md', title: 'InfoQ - 促进软件开发领域知识与创新的传播', date: '2025-03-30' },
-      { filename: '少数派_2025-03-30.md', title: '少数派', date: '2025-03-30' },
-      { filename: '智能聚合_2025-03-30.md', title: '智能聚合', date: '2025-03-30' },
-      { filename: 'Top_stories_-_Google_News_2025-03-30.md', title: 'Top stories - Google News', date: '2025-03-30' }
+      { filename: 'RSS_Digest_2025-03-30_1946.md', title: 'RSS信息聚合', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: 'NYT_>_World_News_2025-03-30_1946.md', title: 'NYT > World News', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: 'BBC_News_2025-03-30_1946.md', title: 'BBC News', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: '36氪_2025-03-30_1946.md', title: '36氪', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: 'Hacker_News_2025-03-30_1946.md', title: 'Hacker News', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: 'InfoQ_-_促进软件开发领域知识与创新的传播_2025-03-30_1946.md', title: 'InfoQ - 促进软件开发领域知识与创新的传播', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: '少数派_2025-03-30_1946.md', title: '少数派', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' },
+      { filename: '智能聚合_2025-03-30_2147.md', title: '智能聚合', date: '2025-03-30', timestamp: 2147, formattedTime: '21:47' },
+      { filename: 'Top_stories_-_Google_News_2025-03-30_1946.md', title: 'Top stories - Google News', date: '2025-03-30', timestamp: 1946, formattedTime: '19:46' }
     ]
     filterDigests()
     sortDigests()
@@ -187,10 +218,30 @@ function filterDigests() {
 function sortDigests() {
   switch (sortOption.value) {
     case 'date-desc':
-      filteredDigests.value.sort((a, b) => b.date.localeCompare(a.date))
+      filteredDigests.value.sort((a, b) => {
+        // 首先按日期排序
+        const dateComp = b.date.localeCompare(a.date);
+        if (dateComp !== 0) return dateComp;
+        
+        // 如果日期相同，按时间戳排序
+        if (a.timestamp && b.timestamp) {
+          return b.timestamp - a.timestamp;
+        }
+        return b.filename.localeCompare(a.filename);
+      })
       break
     case 'date-asc':
-      filteredDigests.value.sort((a, b) => a.date.localeCompare(b.date))
+      filteredDigests.value.sort((a, b) => {
+        // 首先按日期排序
+        const dateComp = a.date.localeCompare(b.date);
+        if (dateComp !== 0) return dateComp;
+        
+        // 如果日期相同，按时间戳排序
+        if (a.timestamp && b.timestamp) {
+          return a.timestamp - b.timestamp;
+        }
+        return a.filename.localeCompare(b.filename);
+      })
       break
     case 'name-asc':
       filteredDigests.value.sort((a, b) => a.title.localeCompare(b.title))
@@ -257,6 +308,7 @@ function openInNewTab() {
 
 .digests-sidebar {
   width: 300px;
+  min-width: 300px;
   background-color: white;
   border-radius: 8px;
   box-shadow: var(--card-shadow);
@@ -291,10 +343,12 @@ function openInNewTab() {
   font-size: 1.5rem;
   color: var(--primary-color);
   margin-right: 1rem;
+  flex-shrink: 0;
 }
 
 .digest-info {
   overflow: hidden;
+  flex: 1;
 }
 
 .digest-title {
@@ -318,6 +372,8 @@ function openInNewTab() {
   overflow-y: auto;
   height: 100%;
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .empty-viewer {
@@ -352,15 +408,21 @@ function openInNewTab() {
 .content-header h2 {
   margin: 0;
   font-size: 1.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-sm {
   padding: 0.25rem 0.75rem;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .markdown-container {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 /* Markdown 样式 */
@@ -470,6 +532,7 @@ function openInNewTab() {
 @media (max-width: 768px) {
   .reader-view {
     height: auto;
+    min-height: calc(100vh - 180px);
   }
   
   .page-header {
@@ -487,15 +550,28 @@ function openInNewTab() {
   .reader-container {
     flex-direction: column;
     height: auto;
+    min-height: 800px;
   }
   
   .digests-sidebar {
     width: 100%;
     max-height: 300px;
+    min-height: 300px;
   }
   
   .content-viewer {
-    height: 500px;
+    height: auto;
+    min-height: 500px;
+  }
+  
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .content-header h2 {
+    width: 100%;
   }
 }
 </style>

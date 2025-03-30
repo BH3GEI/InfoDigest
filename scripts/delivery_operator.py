@@ -101,10 +101,17 @@ class DeliveryOperator:
         current_date = datetime.now().strftime('%Y年%m月%d日')
         weekday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][datetime.now().weekday()]
         
-        prompt = f"""你是一位友好的AI助手，请根据以下RSS文章内容，撰写一篇简短的日报总结。
-        
-今天是{current_date}，{weekday}。请以自然、亲切的语气向用户问好，并概述今天的主要新闻和信息。
-总结应该有300-500字左右，突出重要事件和有趣的话题，语气轻松自然。
+        prompt = f"""你是一位专业的编辑，需要为用户生成一份简明扼要的RSS摘要日报。
+
+今天是{current_date}，{weekday}。请创建一个精炼的信息摘要，类似于一篇学术论文的摘要或执行概要。
+
+要求：
+1. 简短明了，约300-400字
+2. 以客观、中立的语气呈现信息
+3. 重点突出今日最重要的2-3条新闻
+4. 使用精准、专业的语言，避免口语和冗余表达
+5. 结构清晰，段落分明
+6. 不要加入个人见解或评论
 
 以下是今天的RSS文章内容:
 """
@@ -133,15 +140,15 @@ class DeliveryOperator:
             agent_config = {
                 'agents': [{
                     'name': 'daily_summarizer',
-                    'role': '日报编辑',
-                    'goal': '生成一篇友好、自然的日报总结',
-                    'backstory': '你是一位擅长总结新闻和信息的编辑，能以亲切的语气与读者交流。',
+                    'role': '专业摘要编辑',
+                    'goal': '生成一篇简明扼要的RSS日报摘要',
+                    'backstory': '你是一位擅长总结复杂信息并提炼关键点的专业编辑，能够以精炼、客观的语言呈现信息精华。',
                     'verbose': True,
                     'allow_delegation': False
                 }],
                 'tasks': [{
                     'description': prompt,
-                    'expected_output': '一篇300-500字的日报总结。要着重关联报道之间的关联，提出自己的有深度的见解，并且给出有道理的、独特的分析。对一般不常见的名词、事件等，要进行适当的背景介绍。但是，要保持文章的精炼，不要太过冗长。',
+                    'expected_output': '一篇简明扼要的日报摘要，包含今日最重要的信息要点',
                     'agent': 'daily_summarizer',
                     'max_inter': 1,
                     'human_input': False
@@ -157,7 +164,7 @@ class DeliveryOperator:
         return summary
     
     def save_as_combined_markdown(self, processed_feeds: List[Dict[str, Any]]) -> str:
-        """将多个RSS源合并为单个Markdown文件
+        """将多个RSS源合并为单个Markdown文件，提供信息摘要
         
         Args:
             processed_feeds: 多个处理后的数据列表
@@ -216,8 +223,97 @@ class DeliveryOperator:
         
         return file_path
 
+    def _generate_smart_analysis(self, processed_feeds: List[Dict[str, Any]]) -> str:
+        """生成智能深度分析
+        
+        Args:
+            processed_feeds: 多个处理后的数据列表
+            
+        Returns:
+            生成的智能深度分析文本
+        """
+        # 收集所有文章的标题和摘要
+        all_items = []
+        for feed in processed_feeds:
+            feed_info = feed.get('feed_info', {})
+            feed_title = feed_info.get('title', '未知订阅源')
+            
+            for item in feed.get('items', []):
+                all_items.append({
+                    'title': item.get('title', ''),
+                    'source': feed_title,
+                    'summary': item.get('summary', '')
+                })
+        
+        # 构建提示词
+        current_date = datetime.now().strftime('%Y年%m月%d日')
+        weekday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][datetime.now().weekday()]
+        
+        prompt = f"""你是一位经验丰富的媒体分析师和评论家，需要为用户提供一份深度新闻分析。
+
+今天是{current_date}，{weekday}。请以友好的语气向用户问好，并创建一份有深度的新闻分析。
+
+要求：
+1. 篇幅适中，约600-800字
+2. 提供背景信息和上下文，帮助用户更好地理解新闻事件
+3. 分析新闻之间的关联性和潜在影响
+4. 提供有见地的评论和独特视角
+5. 识别出潜在的重要趋势和发展方向
+6. 语言生动活泼，富有吸引力
+7. 在客观事实的基础上加入适度的分析和见解
+
+以下是今天的RSS文章内容:
+"""
+        
+        # 添加文章信息
+        for i, item in enumerate(all_items):
+            prompt += f"""
+{i+1}. 标题: {item['title']}
+   来源: {item['source']}
+   摘要: {item['summary']}
+"""
+        
+        # 调用LLM API
+        if self.config.get('model', {}).get('model_provider', '').lower() == 'google':
+            # 导入必要模块
+            import sys
+            import os
+            sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+            from llm_operator import LLMOperator
+            
+            llm = LLMOperator(config_path=None)
+            llm.model_config = self.config.get('model', {})
+            analysis = llm.call_gemini_api(prompt)
+        else:
+            # 使用CrewAI方式
+            agent_config = {
+                'agents': [{
+                    'name': 'news_analyst',
+                    'role': '媒体分析师',
+                    'goal': '提供有深度和见解的新闻分析',
+                    'backstory': '你是一位经验丰富的媒体分析师和评论家，擅长发现新闻背后的故事和趋势，并提供有价值的见解。',
+                    'verbose': True,
+                    'allow_delegation': False
+                }],
+                'tasks': [{
+                    'description': prompt,
+                    'expected_output': '一篇深度的新闻分析文章，包含背景信息、关联性分析和独特见解',
+                    'agent': 'news_analyst',
+                    'max_inter': 1,
+                    'human_input': False
+                }],
+                'model': self.config.get('model', {}),
+                'crewai_config': {
+                    'memory': False
+                }
+            }
+            from mofa.run.run_agent import run_dspy_or_crewai_agent
+            analysis = run_dspy_or_crewai_agent(agent_config=agent_config)
+        
+        return analysis
+
     def save_as_categorized_markdown(self, processed_feeds: List[Dict[str, Any]]) -> str:
-        """按主题智能分类并保存为Markdown
+        """按主题智能分类并保存为Markdown，提供深度分析
         
         Args:
             processed_feeds: 多个处理后的数据列表
@@ -234,9 +330,9 @@ class DeliveryOperator:
         # 生成markdown内容
         markdown_content = f"# 智能RSS聚合 - {current_date}\n\n"
         
-        # 添加日报总结
-        daily_summary = self._generate_daily_summary(processed_feeds)
-        markdown_content += f"## 今日概览\n\n{daily_summary}\n\n---\n\n"
+        # 添加智能深度分析
+        daily_analysis = self._generate_smart_analysis(processed_feeds)
+        markdown_content += f"## 今日概览\n\n{daily_analysis}\n\n---\n\n"
         
         # 准备所有文章条目
         all_items = []
