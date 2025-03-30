@@ -121,7 +121,7 @@ python scripts/rssflow.py --node rss-operator
 
 ## 运行效果：
 
-![Video](Introduction.mp4)
+视频： https://github.com/BH3GEI/InfoDigest/blob/main/Introduction.mp4
 
 ![image](https://github.com/user-attachments/assets/d0563398-8285-4e53-8a71-15de00f5e09f)
 
