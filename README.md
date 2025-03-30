@@ -3,6 +3,7 @@
 ## 团队信息
 
 - 项目Github仓库：[InfoDigest](https://github.com/BH3GEI/InfoDigest)
+- Contributor: BH3GEI(李尧)
 
 ## 项目简介
 
@@ -36,7 +37,7 @@ InfoDigest是一个基于MOFA框架的RSS聚合与摘要工具，能自动获取
 
 1. 克隆仓库
 ```bash
-git clone https://gitcode.net/your-username/InfoDigest.git
+git clone https://github.com/BH3GEI/InfoDigest.git
 cd InfoDigest
 ```
 
