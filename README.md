@@ -3,7 +3,7 @@
 ## 团队信息
 
 - 项目Github仓库：[InfoDigest](https://github.com/BH3GEI/InfoDigest)
-- Contributor: BH3GEI(李尧)
+- Contributor: BH3GEI(李尧) 
 
 ## 项目简介
 
@@ -43,7 +43,9 @@ cd InfoDigest
 
 2. 安装依赖
 ```bash
-pip install -r requirements.txt
+cd mofa/python
+pip install -e .
+cargo install dora-cli
 ```
 
 3. 配置设置
@@ -54,6 +56,16 @@ pip install -r requirements.txt
 ### 运行程序
 
 1. 启动全流程
+
+
+```bash
+dora up
+dora build rssflow.yml
+dora start rssflow.yml
+```
+
+或者
+
 ```bash
 python start.py
 ```
@@ -108,6 +120,9 @@ python scripts/rssflow.py --node rss-operator
 系统能够分析多个RSS源的内容，根据主题自动对文章进行分类，并按类别组织输出内容。这种智能分类让用户能够按兴趣领域浏览信息，提高信息获取效率。
 
 ## 运行效果：
+
+![Video](file:Introduction.mp4)
+
 ![image](https://github.com/user-attachments/assets/d0563398-8285-4e53-8a71-15de00f5e09f)
 
 ![image](https://github.com/user-attachments/assets/f724a7df-3959-4ed9-9db6-d6d0653122c2)
