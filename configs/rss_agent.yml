@@ -16,7 +16,7 @@ tasks:
     human_input: False
 
 model:
-  model_api_key: "AIzaSyAEJsRtqYhme-f2DwY9JdGd9l_Zl-38eJU"
+  model_api_key: ""
   model_name: "gemini-2.0-flash"
   model_provider: "google"
   model_max_tokens: 2048
