@@ -74,6 +74,87 @@ class DeliveryOperator:
         
         return file_path
     
+    def _generate_daily_summary(self, processed_feeds: List[Dict[str, Any]]) -> str:
+        """生成每日总结
+        
+        Args:
+            processed_feeds: 多个处理后的数据列表
+            
+        Returns:
+            生成的日报总结文本
+        """
+        # 收集所有文章的标题和摘要
+        all_items = []
+        for feed in processed_feeds:
+            feed_info = feed.get('feed_info', {})
+            feed_title = feed_info.get('title', '未知订阅源')
+            
+            for item in feed.get('items', []):
+                all_items.append({
+                    'title': item.get('title', ''),
+                    'source': feed_title,
+                    'summary': item.get('summary', '')
+                })
+        
+        # 构建提示词
+        current_date = datetime.now().strftime('%Y年%m月%d日')
+        weekday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][datetime.now().weekday()]
+        
+        prompt = f"""你是一位友好的AI助手，请根据以下RSS文章内容，撰写一篇简短的日报总结。
+        
+今天是{current_date}，{weekday}。请以自然、亲切的语气向用户问好，并概述今天的主要新闻和信息。
+总结应该有300-500字左右，突出重要事件和有趣的话题，语气轻松自然。
+
+以下是今天的RSS文章内容:
+"""
+        
+        # 添加文章信息
+        for i, item in enumerate(all_items):
+            prompt += f"""
+{i+1}. 标题: {item['title']}
+   来源: {item['source']}
+   摘要: {item['summary']}
+"""
+        
+        # 调用LLM API
+        if self.config.get('model', {}).get('model_provider', '').lower() == 'google':
+            # 导入必要模块
+            import sys
+            import os
+            sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+            from llm_operator import LLMOperator
+            
+            llm = LLMOperator(config_path=None)
+            llm.model_config = self.config.get('model', {})
+            summary = llm.call_gemini_api(prompt)
+        else:
+            # 使用CrewAI方式
+            agent_config = {
+                'agents': [{
+                    'name': 'daily_summarizer',
+                    'role': '日报编辑',
+                    'goal': '生成一篇友好、自然的日报总结',
+                    'backstory': '你是一位擅长总结新闻和信息的编辑，能以亲切的语气与读者交流。',
+                    'verbose': True,
+                    'allow_delegation': False
+                }],
+                'tasks': [{
+                    'description': prompt,
+                    'expected_output': '一篇300-500字的日报总结',
+                    'agent': 'daily_summarizer',
+                    'max_inter': 1,
+                    'human_input': False
+                }],
+                'model': self.config.get('model', {}),
+                'crewai_config': {
+                    'memory': False
+                }
+            }
+            from mofa.run.run_agent import run_dspy_or_crewai_agent
+            summary = run_dspy_or_crewai_agent(agent_config=agent_config)
+        
+        return summary
+    
     def save_as_combined_markdown(self, processed_feeds: List[Dict[str, Any]]) -> str:
         """将多个RSS源合并为单个Markdown文件
         
@@ -90,6 +171,12 @@ class DeliveryOperator:
         
         # 生成markdown内容
         markdown_content = f"# RSS信息聚合 - {current_date}\n\n"
+        
+        # 添加日报总结
+        daily_summary = self._generate_daily_summary(processed_feeds)
+        markdown_content += f"## 今日概览\n\n{daily_summary}\n\n---\n\n"
+        
+        # 添加目录
         markdown_content += f"## 目录\n\n"
         
         # 生成目录
@@ -141,6 +228,13 @@ class DeliveryOperator:
         filename = f"智能聚合_{current_date}.md"
         file_path = os.path.join(self.delivery_config.get('output_dir'), filename)
         
+        # 生成markdown内容
+        markdown_content = f"# 智能RSS聚合 - {current_date}\n\n"
+        
+        # 添加日报总结
+        daily_summary = self._generate_daily_summary(processed_feeds)
+        markdown_content += f"## 今日概览\n\n{daily_summary}\n\n---\n\n"
+        
         # 准备所有文章条目
         all_items = []
         for feed in processed_feeds:
@@ -159,9 +253,6 @@ class DeliveryOperator:
         
         # 使用LLM进行智能分类
         categories = self._categorize_items(all_items)
-        
-        # 生成markdown内容
-        markdown_content = f"# 智能RSS聚合 - {current_date}\n\n"
         
         # 添加目录
         markdown_content += "## 目录\n\n"
