@@ -322,8 +322,7 @@ class DeliveryOperator:
         }
 
 def main():
-    """测试用主函数"""
-    # todo: 集成到MoFA框架中
+    """测试用"""
     pass
 
 if __name__ == "__main__":

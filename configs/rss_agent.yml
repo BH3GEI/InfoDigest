@@ -25,7 +25,6 @@ model:
 crewai_config:
   memory: False
 
-# 在rss_config部分添加更多RSS源
 
 rss_config:
   urls:
@@ -45,7 +44,7 @@ rss_config:
       url: "https://news.ycombinator.com/rss"
   default_url: "https://news.google.com/rss"
   timeout: 30
-  max_items: 5  # 减少每个源的条目数，避免文件过大
+  max_items: 20  # 减少每个源的条目数，避免文件过大
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
   max_retries: 2
 
