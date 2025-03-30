@@ -7,11 +7,11 @@ nodes:
     path: scripts/llm_operator.py
     inputs:
       rss_data: rss-operator/rss_data
-    outputs: processed_content
+    outputs: processed_feeds
     
   - id: delivery-operator
     path: scripts/delivery_operator.py
     inputs:
-      content: llm-operator/processed_content
+      processed_feeds: llm-operator/processed_feeds
     env:
       IS_DATAFLOW_END: true

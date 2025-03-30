@@ -33,6 +33,8 @@ class LLMOperator:
             'model_endpoint': ''
         })
     
+    # 在 LLMOperator 类中的 call_gemini_api 方法中添加重试和延迟机制
+    
     def call_gemini_api(self, prompt: str) -> str:
         """调用Google Gemini API
         
@@ -42,6 +44,9 @@ class LLMOperator:
         Returns:
             生成的文本
         """
+        import time
+        import random
+        
         api_key = self.model_config.get('model_api_key')
         endpoint = self.model_config.get('model_endpoint')
         
@@ -56,23 +61,45 @@ class LLMOperator:
             }]
         }
         
-        try:
-            response = requests.post(endpoint, headers=headers, data=json.dumps(data))
-            response.raise_for_status()  # 检查HTTP错误
-            
-            result = response.json()
-            # 提取生成的文本
-            if 'candidates' in result and len(result['candidates']) > 0:
-                if 'content' in result['candidates'][0] and 'parts' in result['candidates'][0]['content']:
-                    for part in result['candidates'][0]['content']['parts']:
-                        if 'text' in part:
-                            return part['text']
-            
-            # 如果无法提取文本，返回错误信息
-            return "无法从API响应中提取文本"
-        except Exception as e:
-            print(f"调用Gemini API时出错: {str(e)}")
-            return f"API调用失败: {str(e)}"
+        # 添加重试机制
+        max_retries = 3
+        base_delay = 2  # 基础延迟秒数
+        
+        for retry in range(max_retries + 1):
+            try:
+                # 添加随机延迟，避免请求过于集中
+                if retry > 0:
+                    delay = base_delay * (2 ** (retry - 1)) + random.uniform(0, 1)
+                    print(f"API请求延迟 {delay:.2f} 秒后重试 ({retry}/{max_retries})...")
+                    time.sleep(delay)
+                
+                response = requests.post(endpoint, headers=headers, data=json.dumps(data))
+                
+                # 如果遇到速率限制，等待后重试
+                if response.status_code == 429:
+                    if retry < max_retries:
+                        continue
+                    else:
+                        response.raise_for_status()  # 最后一次重试仍失败，抛出异常
+                
+                response.raise_for_status()  # 检查其他HTTP错误
+                
+                result = response.json()
+                # 提取生成的文本
+                if 'candidates' in result and len(result['candidates']) > 0:
+                    if 'content' in result['candidates'][0] and 'parts' in result['candidates'][0]['content']:
+                        for part in result['candidates'][0]['content']['parts']:
+                            if 'text' in part:
+                                return part['text']
+                
+                # 如果无法提取文本，返回错误信息
+                return "无法从API响应中提取文本"
+            except Exception as e:
+                if retry < max_retries:
+                    print(f"调用Gemini API时出错 (尝试 {retry+1}/{max_retries+1}): {str(e)}")
+                else:
+                    print(f"调用Gemini API失败，已达到最大重试次数: {str(e)}")
+                    return f"API调用失败: {str(e)}"
     
     def generate_summary(self, rss_data: Dict[str, Any]) -> Dict[str, Any]:
         """为RSS feed条目生成摘要
@@ -93,61 +120,132 @@ class LLMOperator:
             'items': []
         }
         
-        # 处理每个条目
-        for item in rss_data.get('items', []):
-            # 准备LLM的输入
+        # 获取所有条目
+        items = rss_data.get('items', [])
+        
+        # 如果没有条目，直接返回
+        if not items:
+            return result
+        
+        # 批量处理所有条目
+        # 构建批量提示词
+        batch_prompt = f"""为以下多篇文章分别生成简洁的摘要，每篇2-3句话，捕捉主要观点。
+        
+来源: {rss_data.get('feed_title', '未知订阅源')}
+
+        """
+        
+        # 为每篇文章添加编号和内容
+        for i, item in enumerate(items):
             content = item.get('content', '') or item.get('summary', '')
             title = item.get('title', 'No Title')
             
-            # 创建摘要生成的提示词
-            prompt = f"""为以下文章生成简洁的摘要：
-            
+            batch_prompt += f"""--- 文章 {i+1} ---
 标题: {title}
+内容: {content[:1000]}...（内容已截断）
 
-内容: {content}
+        """
+        
+        batch_prompt += """请按以下格式返回每篇文章的摘要:
+[文章1]
+摘要内容...
 
-提供2-3句话的摘要，捕捉主要观点。"""
-            
-            # 检查是否使用Google API
-            if self.model_config.get('model_provider', '').lower() == 'google':
-                summary = self.call_gemini_api(prompt)
-            else:
-                # 使用原有的CrewAI方式
-                agent_config = {
-                    'agents': [{
-                        'name': 'summarizer',
-                        'role': '内容摘要器',
-                        'goal': '生成简洁且信息丰富的文章摘要',
-                        'backstory': '你是一位擅长将复杂信息提炼为清晰、简洁摘要的专家。',
-                        'verbose': True,
-                        'allow_delegation': False
-                    }],
-                    'tasks': [{
-                        'description': prompt,
-                        'expected_output': '文章的简洁摘要',
-                        'agent': 'summarizer',
-                        'max_inter': 1,
-                        'human_input': False
-                    }],
-                    'model': self.model_config,
-                    'crewai_config': {
-                        'memory': False
-                    }
+[文章2]
+摘要内容...
+
+依此类推。确保每篇文章的摘要都有明确的标记。"""
+        
+        # 检查是否使用Google API
+        if self.model_config.get('model_provider', '').lower() == 'google':
+            all_summaries = self.call_gemini_api(batch_prompt)
+        else:
+            # 使用原有的CrewAI方式
+            agent_config = {
+                'agents': [{
+                    'name': 'summarizer',
+                    'role': '内容摘要器',
+                    'goal': '批量生成简洁且信息丰富的文章摘要',
+                    'backstory': '你是一位擅长将复杂信息提炼为清晰、简洁摘要的专家。',
+                    'verbose': True,
+                    'allow_delegation': False
+                }],
+                'tasks': [{
+                    'description': batch_prompt,
+                    'expected_output': '多篇文章的简洁摘要',
+                    'agent': 'summarizer',
+                    'max_inter': 1,
+                    'human_input': False
+                }],
+                'model': self.model_config,
+                'crewai_config': {
+                    'memory': False
                 }
-                summary = run_dspy_or_crewai_agent(agent_config=agent_config)
-            
-            # 添加到结果
+            }
+            all_summaries = run_dspy_or_crewai_agent(agent_config=agent_config)
+        
+        # 解析返回的摘要
+        summaries = self.parse_batch_summaries(all_summaries, len(items))
+        
+        # 将摘要添加到结果中
+        for i, item in enumerate(items):
+            summary = summaries.get(i, "无法生成摘要")
             processed_item = {
-                'title': title,
+                'title': item.get('title', 'No Title'),
                 'link': item.get('link', ''),
                 'published': item.get('published', ''),
-                'original_content': content,
+                'original_content': item.get('content', '') or item.get('summary', ''),
                 'summary': summary
             }
             result['items'].append(processed_item)
         
         return result
-
+    
+    def parse_batch_summaries(self, all_summaries: str, num_items: int) -> Dict[int, str]:
+        """解析批量生成的摘要
+        
+        Args:
+            all_summaries: LLM返回的所有摘要文本
+            num_items: 原始条目数量
+            
+        Returns:
+            索引到摘要的映射字典
+        """
+        summaries = {}
+        
+        # 尝试使用正则表达式匹配 [文章X] 格式
+        import re
+        pattern = r'\[文章(\d+)\](.*?)(?=\[文章\d+\]|$)'
+        matches = re.findall(pattern, all_summaries, re.DOTALL)
+        
+        if matches:
+            for match in matches:
+                try:
+                    index = int(match[0]) - 1  # 转换为0基索引
+                    if 0 <= index < num_items:
+                        summaries[index] = match[1].strip()
+                except ValueError:
+                    continue
+        
+        # 如果正则匹配失败，尝试简单的分割方法
+        if not summaries:
+            parts = all_summaries.split('[文章')
+            for i, part in enumerate(parts[1:], 0):  # 跳过第一个空元素
+                if i < num_items:
+                    # 提取数字后的内容
+                    content = part.split(']', 1)
+                    if len(content) > 1:
+                        summaries[i] = content[1].strip()
+        
+        # 确保所有条目都有摘要
+        for i in range(num_items):
+            if i not in summaries:
+                # 尝试从文本中提取可能的摘要
+                summaries[i] = "无法解析摘要"
+        
+        return summaries
+    
+    # 修改LLMOperator类的run_as_agent和generate_summary方法
+    
     def run_as_agent(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """作为MoFA代理运行
         
@@ -158,7 +256,15 @@ class LLMOperator:
             包含处理数据和摘要的字典
         """
         rss_data = inputs.get('rss_data', {})
-        return self.generate_summary(rss_data)
+        feeds = rss_data.get('feeds', [])
+        
+        # 处理每个feed
+        processed_feeds = []
+        for feed in feeds:
+            processed_feed = self.generate_summary(feed)
+            processed_feeds.append(processed_feed)
+        
+        return {'processed_feeds': processed_feeds}
 
 def main():
     """测试LLM操作器的主函数"""
