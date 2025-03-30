@@ -3,6 +3,8 @@
 
 import os
 import yaml
+import requests
+import json
 from typing import Dict, List, Any, Optional
 
 from mofa.run.run_agent import run_dspy_or_crewai_agent
@@ -26,8 +28,51 @@ class LLMOperator:
         self.model_config = self.config.get('model', {
             'model_api_key': '',
             'model_name': 'gpt-4o-mini',
-            'model_max_tokens': 2048
+            'model_provider': 'openai',
+            'model_max_tokens': 2048,
+            'model_endpoint': ''
         })
+    
+    def call_gemini_api(self, prompt: str) -> str:
+        """调用Google Gemini API
+        
+        Args:
+            prompt: 提示词
+            
+        Returns:
+            生成的文本
+        """
+        api_key = self.model_config.get('model_api_key')
+        endpoint = self.model_config.get('model_endpoint')
+        
+        # 如果endpoint中已包含API key，则不再添加
+        if '?key=' not in endpoint:
+            endpoint = f"{endpoint}?key={api_key}"
+        
+        headers = {'Content-Type': 'application/json'}
+        data = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+        
+        try:
+            response = requests.post(endpoint, headers=headers, data=json.dumps(data))
+            response.raise_for_status()  # 检查HTTP错误
+            
+            result = response.json()
+            # 提取生成的文本
+            if 'candidates' in result and len(result['candidates']) > 0:
+                if 'content' in result['candidates'][0] and 'parts' in result['candidates'][0]['content']:
+                    for part in result['candidates'][0]['content']['parts']:
+                        if 'text' in part:
+                            return part['text']
+            
+            # 如果无法提取文本，返回错误信息
+            return "无法从API响应中提取文本"
+        except Exception as e:
+            print(f"调用Gemini API时出错: {str(e)}")
+            return f"API调用失败: {str(e)}"
     
     def generate_summary(self, rss_data: Dict[str, Any]) -> Dict[str, Any]:
         """为RSS feed条目生成摘要
@@ -63,31 +108,33 @@ class LLMOperator:
 
 提供2-3句话的摘要，捕捉主要观点。"""
             
-            # 创建LLM的代理配置
-            agent_config = {
-                'agents': [{
-                    'name': 'summarizer',
-                    'role': '内容摘要器',
-                    'goal': '生成简洁且信息丰富的文章摘要',
-                    'backstory': '你是一位擅长将复杂信息提炼为清晰、简洁摘要的专家。',
-                    'verbose': True,
-                    'allow_delegation': False
-                }],
-                'tasks': [{
-                    'description': prompt,
-                    'expected_output': '文章的简洁摘要',
-                    'agent': 'summarizer',
-                    'max_inter': 1,
-                    'human_input': False
-                }],
-                'model': self.model_config,
-                'crewai_config': {
-                    'memory': False
+            # 检查是否使用Google API
+            if self.model_config.get('model_provider', '').lower() == 'google':
+                summary = self.call_gemini_api(prompt)
+            else:
+                # 使用原有的CrewAI方式
+                agent_config = {
+                    'agents': [{
+                        'name': 'summarizer',
+                        'role': '内容摘要器',
+                        'goal': '生成简洁且信息丰富的文章摘要',
+                        'backstory': '你是一位擅长将复杂信息提炼为清晰、简洁摘要的专家。',
+                        'verbose': True,
+                        'allow_delegation': False
+                    }],
+                    'tasks': [{
+                        'description': prompt,
+                        'expected_output': '文章的简洁摘要',
+                        'agent': 'summarizer',
+                        'max_inter': 1,
+                        'human_input': False
+                    }],
+                    'model': self.model_config,
+                    'crewai_config': {
+                        'memory': False
+                    }
                 }
-            }
-            
-            # 运行LLM代理
-            summary = run_dspy_or_crewai_agent(agent_config=agent_config)
+                summary = run_dspy_or_crewai_agent(agent_config=agent_config)
             
             # 添加到结果
             processed_item = {
@@ -115,8 +162,32 @@ class LLMOperator:
 
 def main():
     """测试LLM操作器的主函数"""
-    # todo: 集成到MoFA框架中
-    pass
+    # 初始化操作器
+    operator = LLMOperator(config_path="../configs/rss_agent.yml")
+    
+    # 模拟RSS数据
+    test_data = {
+        "feed_title": "测试订阅源",
+        "feed_link": "http://example.com",
+        "feed_description": "这是一个测试RSS源",
+        "items": [
+            {
+                "title": "测试文章1",
+                "link": "http://example.com/1",
+                "published": "2024-01-01",
+                "content": "这是测试文章1的内容，主要讲述了人工智能在医疗领域的应用前景..."
+            },
+            {
+                "title": "测试文章2",
+                "summary": "这是测试文章2的摘要，讨论了区块链技术在金融行业的创新应用..."
+            }
+        ]
+    }
+    
+    # 生成摘要
+    result = operator.generate_summary(test_data)
+    print("生成的摘要结果:")
+    print(yaml.dump(result, allow_unicode=True, sort_keys=False))
 
 if __name__ == "__main__":
     main()

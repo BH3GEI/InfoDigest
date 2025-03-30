@@ -55,8 +55,8 @@ class RSSOperator:
             # 配置feedparser
             feedparser.USER_AGENT = self.rss_config.get('user_agent')
             
-            # 解析订阅源
-            feed = feedparser.parse(url, timeout=self.rss_config.get('timeout'))
+            # 解析订阅源 - 移除timeout参数
+            feed = feedparser.parse(url)
             
             # 检查订阅源是否成功解析
             if hasattr(feed, 'status') and feed.status >= 400:

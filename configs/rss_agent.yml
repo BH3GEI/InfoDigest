@@ -16,9 +16,11 @@ tasks:
     human_input: False
 
 model:
-  model_api_key: ""
-  model_name: "gpt-4o-mini"
+  model_api_key: "AIzaSyDISLbyndUAhm68UFaOsnGnjacUxDlskYY"
+  model_name: "gemini-2.0-flash"
+  model_provider: "google"
   model_max_tokens: 2048
+  model_endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 crewai_config:
   memory: False
