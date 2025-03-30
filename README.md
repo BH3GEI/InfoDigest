@@ -107,3 +107,19 @@ python scripts/rssflow.py --node rss-operator
 
 系统能够分析多个RSS源的内容，根据主题自动对文章进行分类，并按类别组织输出内容。这种智能分类让用户能够按兴趣领域浏览信息，提高信息获取效率。
 
+## 运行效果：
+![image](https://github.com/user-attachments/assets/d0563398-8285-4e53-8a71-15de00f5e09f)
+
+![image](https://github.com/user-attachments/assets/f724a7df-3959-4ed9-9db6-d6d0653122c2)
+
+![image](https://github.com/user-attachments/assets/ea84d69a-de3b-4692-a1cb-bd91a4911598)
+
+![image](https://github.com/user-attachments/assets/bf96f49f-d5ad-4e72-826e-e6f05bb33a5b)
+
+![image](https://github.com/user-attachments/assets/5a2ae6d9-3e46-48db-a9a2-6f3cd13a2857)
+
+![image](https://github.com/user-attachments/assets/dfd3bf84-6237-4bde-92ad-2c32045e1e77)
+
+
+
+
