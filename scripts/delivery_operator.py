@@ -47,9 +47,10 @@ class DeliveryOperator:
         feed_info = processed_data.get('feed_info', {})
         feed_title = feed_info.get('title', '未知订阅源')
         
-        # 生成文件名
+        # 生成文件名，添加时间戳以避免覆盖
         current_date = datetime.now().strftime(self.delivery_config.get('date_format'))
-        filename = f"{feed_title.replace(' ', '_')}_{current_date}.md"
+        current_time = datetime.now().strftime('%H%M')  # 添加小时和分钟
+        filename = f"{feed_title.replace(' ', '_')}_{current_date}_{current_time}.md"
         file_path = os.path.join(self.delivery_config.get('output_dir'), filename)
         
         # 生成markdown内容
@@ -140,7 +141,7 @@ class DeliveryOperator:
                 }],
                 'tasks': [{
                     'description': prompt,
-                    'expected_output': '一篇300-500字的日报总结',
+                    'expected_output': '一篇300-500字的日报总结。要着重关联报道之间的关联，提出自己的有深度的见解，并且给出有道理的、独特的分析。对一般不常见的名词、事件等，要进行适当的背景介绍。但是，要保持文章的精炼，不要太过冗长。',
                     'agent': 'daily_summarizer',
                     'max_inter': 1,
                     'human_input': False
@@ -164,9 +165,10 @@ class DeliveryOperator:
         Returns:
             文件保存路径
         """
-        # 生成文件名
+        # 生成文件名，添加时间戳以避免覆盖
         current_date = datetime.now().strftime(self.delivery_config.get('date_format'))
-        filename = f"RSS_Digest_{current_date}.md"
+        current_time = datetime.now().strftime('%H%M')  # 添加小时和分钟
+        filename = f"RSS_Digest_{current_date}_{current_time}.md"
         file_path = os.path.join(self.delivery_config.get('output_dir'), filename)
         
         # 生成markdown内容
@@ -223,9 +225,10 @@ class DeliveryOperator:
         Returns:
             文件保存路径
         """
-        # 生成文件名
+        # 生成文件名，添加时间戳以避免覆盖
         current_date = datetime.now().strftime(self.delivery_config.get('date_format'))
-        filename = f"智能聚合_{current_date}.md"
+        current_time = datetime.now().strftime('%H%M')  # 添加小时和分钟
+        filename = f"智能聚合_{current_date}_{current_time}.md"
         file_path = os.path.join(self.delivery_config.get('output_dir'), filename)
         
         # 生成markdown内容
