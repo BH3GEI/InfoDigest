@@ -135,6 +135,13 @@ python scripts/rssflow.py --node rss-operator
 
 ![image](https://github.com/user-attachments/assets/dfd3bf84-6237-4bde-92ad-2c32045e1e77)
 
+## 许可证
+
+本项目采用 [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.txt) 许可证。
+
+
+Copyright (C) 2025 BH3GEI. All rights reserved.
+
 
 
 
