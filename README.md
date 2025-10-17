@@ -9,6 +9,8 @@
 ![image](https://github.com/user-attachments/assets/02ceaddf-f9fa-4737-a07b-7f024d550742)
 
 
+<img width="160" height="160" alt="image" src="https://github.com/user-attachments/assets/c11751f6-9410-44e3-bd8f-3a93bc431a38" />
+
 此为2025 MoFA Search AI 搜索引擎大赛比赛作品。是[moxin-org/mofa](https://github.com/moxin-org/mofa)相关的子项目。
 
 InfoDigest是一个基于MOFA框架的RSS聚合与摘要工具，能自动获取RSS源内容，利用大语言模型生成摘要，并将处理后的内容导出为Markdown文件。系统采用数据流驱动设计，通过三个主要组件完成从RSS获取到内容分发的全流程。
